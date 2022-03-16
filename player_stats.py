@@ -1,0 +1,9 @@
+name = ""
+level = 1
+exp = 0
+wood = 0
+stone = 0
+ore = 0
+metal = 0
+weapon = "Fists"
+inventory = []
