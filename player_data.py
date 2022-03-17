@@ -1,0 +1,16 @@
+name = "Steve"
+level = 1
+exp = 0
+wood = 0
+stone = 0
+iron_ore = 0
+iron = 0
+gold_ore = 0
+gold = 0
+money = 0
+weapon = "Fists"
+weapon_inventory = ['Fists']
+inventory = []
+world = 0
+quests_completed = []
+quest_current = "null"
