@@ -5,7 +5,7 @@ from tkinter import *
 
 window = Tk()
 window.title("Text Based Adventure Game")
-window.configure(background = "black")
+window.configure(background = "white")
 window.geometry("640x320")
 
 playerStatsOutput = Text(window, width = 50, height = 9, bg = "black", fg = "white")
@@ -13,10 +13,16 @@ playerStatsOutput.grid(row = 0, column = 0, sticky = "w")
 #playerInvOutput = Text(window, width = 50, height = 4, bg = "black", fg = "white")
 #playerInvOutput.grid(row = 0, column = 1, sticky = "w")
 
-textOutput = Text(window, width = 100, height = 6, wrap = WORD, bg = "black", fg = "white")
-textOutput.grid(row = 1, column = 0, columnspan = 2, sticky = "w'")
+textOutput = Text(window, width = 100, height = 6, wrap = WORD, bg = "white")
+textOutput.grid(row = 1, column = 0, columnspan = 2, sticky = "w")
 
-Button(window, Text = "Submit", width = 6).grid(row = 2, column = 0, sticky = "w'")
+Button(window, text = "Submit", width = 6).grid(row = 2, column = 0, sticky = "w")
+
+textOutput.delete(0.0, END)
+text = "Would you like to play? (yes/no)"
+textOutput.insert(END, text)
+
+window.mainloop()
 
 def save_data():
     f = open("player_data.py", "w")
@@ -139,20 +145,3 @@ def game_loop():
         print("You gained " + str(wood_gained) + " wood.")
         save_data()
         game_loop()
-
-window.mainloop()
-
-answer = input("Would you like to play the game? (yes/no) ").lower().strip()
-if name == "null":
-    name = input("What is your name, travller? ")
-    save_data()
-else:
-    print("Welcome back, " + name)
-
-if answer == "yes":
-   game_loop()
-else:
-    print("Ok, bye!")
-
-
-
