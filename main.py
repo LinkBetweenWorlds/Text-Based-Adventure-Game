@@ -1,5 +1,6 @@
 import json
 from player_data import *
+import random
 
 def save_data():
     f = open("player_data.py", "w")
@@ -24,6 +25,8 @@ def save_data():
     f.close()
 
 def game_loop():
+    global wood
+    global stone
     print("Options")
     tasks = ""
     if level >= 1:
@@ -37,7 +40,17 @@ def game_loop():
     if level >= 7:
         tasks += ("Travel" + "\n")
     print(tasks)
-    answer = input("what do you want to do?").lower().strip()
+    answer = input("what do you want to do? ").lower().strip()
+    if answer == "inventory" or "inv":
+        print("Wood: " + str(wood) + "\n")
+        print("Stone: " + str(stone) + "\n")
+    if answer == "chop":
+        print("You went to the forst and chopped down some trees.")
+        wood_gained = random.randint(2, 8) * level
+        wood += wood_gained
+        print("You gained " + str(wood_gained) + " wood.")
+        save_data()
+        game_loop()
 
 
 answer = input("Would you like to play the game? (yes/no) ").lower().strip()

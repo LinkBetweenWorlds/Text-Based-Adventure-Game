@@ -1,7 +1,7 @@
-name = "Steve"
+name = "Blink"
 level = 1
 exp = 0
-wood = 0
+wood = 8
 stone = 0
 iron_ore = 0
 iron = 0
