@@ -1,6 +1,22 @@
 import json
 from player_data import *
 import random
+from tkinter import *
+
+window = Tk()
+window.title("Text Based Adventure Game")
+window.configure(background = "black")
+window.geometry("640x320")
+
+playerStatsOutput = Text(window, width = 50, height = 9, bg = "black", fg = "white")
+playerStatsOutput.grid(row = 0, column = 0, sticky = "w")
+#playerInvOutput = Text(window, width = 50, height = 4, bg = "black", fg = "white")
+#playerInvOutput.grid(row = 0, column = 1, sticky = "w")
+
+textOutput = Text(window, width = 100, height = 6, wrap = WORD, bg = "black", fg = "white")
+textOutput.grid(row = 1, column = 0, columnspan = 2, sticky = "w'")
+
+Button(window, Text = "Submit", width = 6).grid(row = 2, column = 0, sticky = "w'")
 
 def save_data():
     f = open("player_data.py", "w")
@@ -24,10 +40,37 @@ def save_data():
 
     f.close()
 
-def game_loop():
+def ask_question():
+    #Set Variables
+    global name
+    global level
+    global exp
     global wood
     global stone
-    print("Options")
+    global iron_ore
+    global iron
+    global gold_ore
+    global gold
+    global money
+    global weapon
+    global weapon_inventory
+    global inventory
+    global world
+    global quests_completed
+    global quest_current
+
+    #Update Game Window
+    playerStatsOutput.delete(0.0, END)
+    #playerInvOutput.delete(0.0, END)
+    textOutput.delete(0.0, END)
+
+    playerStatsText = (
+        "Name: " + name + "\n" +
+        "Level: " + str(level) + "\n" +
+        "Experience: " + str(exp) + "\n"
+        )
+    playerStatsOutput.insert(END, playerStatsText)
+    #Player Options
     tasks = ""
     if level >= 1:
         tasks += ("Inventory" + "\n")
@@ -39,11 +82,56 @@ def game_loop():
         tasks += ("Smelt" + "\n")
     if level >= 7:
         tasks += ("Travel" + "\n")
-    print(tasks)
+    textOutput.insert(END, "Options: " + "\n" + tasks)
+
+def game_loop():
+    #Set Variables
+    global name
+    global level
+    global exp
+    global wood
+    global stone
+    global iron_ore
+    global iron
+    global gold_ore
+    global gold
+    global money
+    global weapon
+    global weapon_inventory
+    global inventory
+    global world
+    global quests_completed
+    global quest_current
+
+    #Update Game Window
+    playerStatsOutput.delete(0.0, END)
+    #playerInvOutput.delete(0.0, END)
+    textOutput.delete(0.0, END)
+
+    playerStatsText = (
+        "Name: " + name + "\n" +
+        "Level: " + str(level) + "\n" +
+        "Experience: " + str(exp) + "\n"
+        )
+    playerStatsOutput.insert(END, playerStatsText)
+    #Player Options
+    tasks = ""
+    if level >= 1:
+        tasks += ("Inventory" + "\n")
+        tasks += ("Player Stats" + "\n")
+        tasks += ("Chop" + "\n")
+        tasks += ("Fight" + "\n")
+    if level >= 5:
+        tasks += ("Mine" + "\n")
+        tasks += ("Smelt" + "\n")
+    if level >= 7:
+        tasks += ("Travel" + "\n")
+    textOutput.insert(END, "Options: " + "\n" + tasks)
     answer = input("what do you want to do? ").lower().strip()
     if answer == "inventory" or "inv":
         print("Wood: " + str(wood) + "\n")
         print("Stone: " + str(stone) + "\n")
+        print("Iron Ore: " + str(iron_ore) + "\n")
     if answer == "chop":
         print("You went to the forst and chopped down some trees.")
         wood_gained = random.randint(2, 8) * level
@@ -52,6 +140,7 @@ def game_loop():
         save_data()
         game_loop()
 
+window.mainloop()
 
 answer = input("Would you like to play the game? (yes/no) ").lower().strip()
 if name == "null":
@@ -64,4 +153,6 @@ if answer == "yes":
    game_loop()
 else:
     print("Ok, bye!")
+
+
 
