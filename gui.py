@@ -2,8 +2,14 @@ from tkinter import *
 
 def click():
     answer = textEntry.get()
+    output.configure(state='normal')
+    output.delete(0.0, END)
+    answer += "\n"
+    output.insert(END, answer)
+    answer += output.get(0.0, END)
     output.delete(0.0, END)
     output.insert(END, answer)
+    output.configure(state='disabled')
 
 def close():
     window.destroy()
@@ -25,6 +31,7 @@ Label(window, text="Output: ", bg="black", fg="white", font="times 12 bold").gri
 
 output = Text(window, width=75, height=6, wrap=WORD, bg="white")
 output.grid(row=4, column=0, columnspan=2, sticky="w")
+output.configure(state='disabled')
 
 Button(window, text="Exit", width=14, command=close).grid(row=5, column=0, sticky="w")
 
