@@ -4,6 +4,7 @@ from monster_data import *
 from weapon_data import *
 from armor_data import *
 from player_attack_data import *
+from player_inventory import *
 import random
 from tkinter import *
 import asynctkinter as at
@@ -112,6 +113,9 @@ async def gameLoop():
     global gold
     global money
 
+    nextButton.configure(state = 'disabled')
+    submitButton.configure(state = 'normal')
+
     #Update Player Stats
     updatePlayerStats()
 
@@ -145,9 +149,10 @@ async def gameLoop():
         text = 'You go to the forest and chop down some trees.\n'
         text += 'You gained ' + str(wood_gained) + ' wood.'
         wood += wood_gained
+        saveData()
         textOutput.insert(END, text)
         textOutput.configure(state = 'disabled')
-        saveData()
+        nextButton.configure(state = 'normal')
         await at.event(nextButton, '<Button>')
         at.start(gameLoop())
     if answer == 'mine':      
@@ -168,16 +173,48 @@ async def gameLoop():
             text += 'You gained ' + str(iron_ore_gained) + ' iron ore.\n'
             text += 'You gained ' + str(gold_ore_gained) + ' gold ore.'
         stone += stone_gained
+        saveData()
         textOutput.insert(END, text)
         textOutput.configure(state = 'disabled')
-        saveData()
         await at.event(nextButton, '<Button>')
         at.start(gameLoop())
     if answer == 'fight':
-        textOutput.configure(state = 'normal')
-        textOutput.delete(0.0, END)
+        at.start(fight())
+    if answer == 'heal':
+        at.start(heal())
+    if answer == 'exit':
+        exitGame()
     else:
         at.start(gameLoop())
+
+async def fight():
+    global exp
+    global health
+    global health_max
+    global mp
+    global mp_max
+    textOutput.configure(state = 'normal')
+    textOutput.delete(0.0, END)
+    text = 'Hello'
+    textOutput.insert(END, text)
+    await at.event(nextButton, '<Button>')
+    at.start(gameLoop())
+
+async def heal():
+    await at.sleep(500, after = submitButton.after)
+    global health
+    global health_max
+    global mp
+    global mp_max
+    textOutput.configure(state = 'normal')
+    textOutput.delete(0.0, END)
+    text = 'Which potions would you like to use?'
+    textOutput.insert(END, text)
+    textOutput.configure(state = 'disabled')
+    nextButton.configure(state = 'normal')
+    await at.event(nextButton, '<Button>')
+    saveInvData()
+    at.start(gameLoop())
 
 def grabText():
     global answer
@@ -187,17 +224,43 @@ def grabText():
     playerAnswerBox.delete(0.0, END)
     playerAnswerBox.configure(state = 'disabled')
 
-def check_levelup():
+async def check_levelup():
     global level
     global exp
+    global health
+    global health_max
+    global mp
+    global mp_max
+    exp_needed = 50 * level
+
+    if exp >= exp_needed:
+        level += 1
+        exp = 0
+        health_max += 10
+        mp_max += 10
+        health = health_max
+        mp = mp_max
+        textOutput.configure(state = 'normal')
+        textOutput.delete(0.0, END)
+        text = ('You leveled you to level ' + str(level) + '!\n')
+        text += ('Health: ' + str(health_max) + '\n')
+        text += ('MP: ' + str(mp_max) + '\n')
+        textOutput.insert(END, text)
+        textOutput.configure(state = 'disabled')
+        nextButton.configure(state = 'normal')
+        await at.event(nextButton, '<Button>')
+        at.start(gameLoop())
+    else:
+        at.start(gameLoop())
 
 def updatePlayerStats():
     #Player Stats
     playerStatsOutput.configure(state = 'normal')
     playerStatsOutput.delete(0.0, END)
+    exp_needed = 50 * level
     stats = ''
     stats += ('Level: ' + str(level) + '\n')
-    stats += ('Experience: ' + str(exp) + '\n')
+    stats += ('Experience: ' + str(exp) + ' / ' + str(exp_needed) + '\n')
     stats += ('Health: ' + str(health) + ' / ' + str(health_max) + '\n')
     stats += ('MP: ' + str(mp) + ' / ' + str(mp_max) + '\n')
     stats += ('Wood: ' + str(wood) + '\n')
@@ -220,15 +283,12 @@ def updatePlayerStats():
     playerEquipOutput.insert(END, equipText)
     playerEquipOutput.configure(state = 'disabled')
 
-
-
-
 def saveData():
     f = open("player_data.py", "w")
 
     f.write("name = \"" + name + "\"\n")
     f.write("level = " + str(level) + "\n")
-    f.write("type_class = " + type_class + "\n")
+    f.write('type_class = "' + type_class + '"\n')
     f.write("exp = " + str(exp) + "\n")
     f.write("health = " + str(health) + "\n")
     f.write("health_max = " + str(health_max) + "\n")
@@ -241,14 +301,28 @@ def saveData():
     f.write("gold_ore = " + str(gold_ore) + "\n")
     f.write("gold = " + str(gold) + "\n")
     f.write("money = " + str(money) + "\n")
-    f.write("weapon = \"" + weapon + "\"\n")
+    f.write('weapon = "' + weapon + '"\n')
     f.write("weapon_inventory = " + str(weapon_inventory) + "\n")
     f.write("armor = \"" + armor + "\"\n")
     f.write("armor_inventory = " + str(armor_inventory) + "\n")
     f.write("inventory = " + str(inventory) + "\n")
     f.write("world = " + str(world) + "\n")
     f.write("quests_completed = " + str(quests_completed) + "\n")
-    f.write("quest_current = \"" + quest_current + "\"\n")
+    f.write('quest_current = "' + quest_current + '"\n')
+
+    f.close()
+
+def saveInvData():
+    f = open('player_inventory.py', 'w')
+
+    f.write('small_health_pot = ' + str(small_health_pot) + '\n')
+    f.write('medium_health_pot = ' + str(medium_health_pot) + '\n')
+    f.write('lagre_health_pot = ' + str(large_health_pot) + '\n')
+    f.write('max_health_pot = ' + str(max_health_pot) + '\n')
+    f.write('small_mp_pot = ' + str(small_mp_pot) + '\n')
+    f.write('medium_mp_pot = ' + str(medium_mp_pot) + '\n')
+    f.write('large_mp_pot = ' + str(large_mp_pot) + '\n')
+    f.write('max_mp_pot = ' + str(max_mp_pot) + '\n')
 
     f.close()
 

@@ -1,12 +1,12 @@
 name = "Blink"
 level = 1
-type_class = Mage
+type_class = "Mage"
 exp = 0
 health = 10
 health_max = 10
 mp = 10
 mp_max = 10
-wood = 8
+wood = 38
 stone = 30
 iron_ore = 15
 iron = 0
