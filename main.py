@@ -3,7 +3,6 @@ from player_data import *
 from monster_data import *
 from weapon_data import *
 from armor_data import *
-from player_attack_data import *
 from player_inventory import *
 import random
 from tkinter import *
@@ -128,9 +127,9 @@ async def gameLoop():
     text += ('Fight\n')
     text += ('Chop\n')
     text += ('Mine\n')
+    text += ('Heal\n')
     if level >= 3:
-        text += ('Shop\n')
-        text += ('Heal\n')
+        text += ('Shop\n') 
     if level >= 5:
         text += ('Smelt\n')
     if level >= 7:  
@@ -217,7 +216,7 @@ async def heal():
     mp_pots = small_mp_pot + medium_mp_pot + large_mp_pot + max_mp_pot
     if (health_pots == 0) and (mp_pots == 0):
         text = "You don't have any potions to use.\n"
-        text += 'You might be able to but some from the shop.'
+        text += 'You might be able to buy some from the shop.'
     else:
         text = 'Which potions would you like to use?'
         if small_health_pot > 0:
@@ -227,7 +226,15 @@ async def heal():
         if large_health_pot > 0:
             text += ('Large Health Potion x' + large_health_pot + ' Restores 80 health points.\n')
         if max_health_pot > 0:
-            text += ('Max Health Potions x' + max_health_pot + ' Restores all your health points.\n')   
+            text += ('Max Health Potion x' + max_health_pot + ' Restores all your health points.\n')
+        if small_mp_pot > 0:
+            text += ('Small MP Potion x' + small_mp_pot + ' Restores 10 MP points.\n')
+        if medium_mp_pot > 0:
+            text += ('Medium MP Potion x' + medium_mp_pot + ' Restores 35 MP points.\n')
+        if large_mp_pot > 0:
+            text += ('Large MP Potion x' + large_mp_pot + ' Restores 80 MP points.\n')
+        if max_mp_pot > 0:
+            text += ('Max MP Potion x' + max_mp_pot + ' Restores all your MP points.\n')
     textOutput.insert(END, text)
     textOutput.configure(state = 'disabled')
     nextButton.configure(state = 'normal')
