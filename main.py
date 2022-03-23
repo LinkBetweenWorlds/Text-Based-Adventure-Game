@@ -128,13 +128,17 @@ async def gameLoop():
     text += ('Fight\n')
     text += ('Chop\n')
     text += ('Mine\n')
+    if level >= 3:
+        text += ('Shop\n')
+        text += ('Heal\n')
     if level >= 5:
         text += ('Smelt\n')
-    if level >= 7:
-        text += ('Shop\n')
+    if level >= 7:  
         text += ('Travel\n')
     if level >= 10:
         text += ('Quests\n')
+    if level >= 15:
+        text += ('Enchant\n')
     textOutput.insert(END, text)
     textOutput.configure(state = 'disabled')
     playerAnswerBox.configure(state = 'normal')
@@ -201,6 +205,7 @@ async def fight():
     at.start(gameLoop())
 
 async def heal():
+    print('Start heal')
     await at.sleep(500, after = submitButton.after)
     global health
     global health_max
@@ -208,7 +213,21 @@ async def heal():
     global mp_max
     textOutput.configure(state = 'normal')
     textOutput.delete(0.0, END)
-    text = 'Which potions would you like to use?'
+    health_pots = small_health_pot + medium_health_pot + large_health_pot + max_health_pot
+    mp_pots = small_mp_pot + medium_mp_pot + large_mp_pot + max_mp_pot
+    if (health_pots == 0) and (mp_pots == 0):
+        text = "You don't have any potions to use.\n"
+        text += 'You might be able to but some from the shop.'
+    else:
+        text = 'Which potions would you like to use?'
+        if small_health_pot > 0:
+            text += ('Small Health Potion x' + small_health_pot + ' Restores 10 health points.\n')
+        if medium_health_pot > 0:
+            text += ('Medium Health Potion x' + medium_health_pot + ' Restores 35 health points.\n')
+        if large_health_pot > 0:
+            text += ('Large Health Potion x' + large_health_pot + ' Restores 80 health points.\n')
+        if max_health_pot > 0:
+            text += ('Max Health Potions x' + max_health_pot + ' Restores all your health points.\n')   
     textOutput.insert(END, text)
     textOutput.configure(state = 'disabled')
     nextButton.configure(state = 'normal')
