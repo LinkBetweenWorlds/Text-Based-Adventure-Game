@@ -1,4 +1,6 @@
 import json
+from typing import AnyStr
+from warnings import _OptionError
 from player_data import *
 from monster_data import *
 from weapon_data import *
@@ -124,70 +126,86 @@ async def gameLoop():
     text = ''
     text += ('What would you like to do?\n')
     #Options
+    options = []
+    options.clear
+    options.append('exit')
     text += ('Fight\n')
+    options.append('fight')
     text += ('Chop\n')
+    options.append('chop')
     text += ('Mine\n')
+    options.append('mine')
     text += ('Heal\n')
+    options.append('heal')
     if level >= 3:
-        text += ('Shop\n') 
+        text += ('Shop\n')
+        options.append('shop')
     if level >= 5:
         text += ('Smelt\n')
+        options.append('smelt')
     if level >= 7:  
         text += ('Travel\n')
+        options.append('travel')
     if level >= 10:
         text += ('Quests\n')
+        options.append('quests')
     if level >= 15:
         text += ('Enchant\n')
+        options.append('enchant')
     textOutput.insert(END, text)
     textOutput.configure(state = 'disabled')
     playerAnswerBox.configure(state = 'normal')
     submitButton.configure(state = 'normal')
     await at.event(submitButton, '<Button>')
     await at.sleep(500, after=submitButton.after)
-
-    if answer == 'chop':
-        wood_gained = (random.randint(3, 8) * level)
-        textOutput.configure(state = 'normal')
-        textOutput.delete(0.0, END)
-        text = 'You go to the forest and chop down some trees.\n'
-        text += 'You gained ' + str(wood_gained) + ' wood.'
-        wood += wood_gained
-        saveData()
-        textOutput.insert(END, text)
-        textOutput.configure(state = 'disabled')
-        nextButton.configure(state = 'normal')
-        await at.event(nextButton, '<Button>')
-        at.start(gameLoop())
-    if answer == 'mine':      
-        textOutput.configure(state = 'normal')
-        textOutput.delete(0.0, END)
-        text = 'You went down into the mines to get some stone'
-        stone_gained = (random.randint(3, 8) * level)
-        if level < 5:
-            text += '.\n'
-            text += 'You gained ' + str(stone_gained) + ' stone.\n'
-        if level >= 5:
-            text += ', and ores.\n'
-            iron_ore_gained = (random.randint(2, 5) * level)
-            gold_ore_gained = (random.randint(1, 4) * level)
-            iron_ore += iron_ore_gained
-            gold_ore += gold_ore_gained
-            text += 'You gained ' + str(stone_gained) + ' stone.\n'
-            text += 'You gained ' + str(iron_ore_gained) + ' iron ore.\n'
-            text += 'You gained ' + str(gold_ore_gained) + ' gold ore.'
-        stone += stone_gained
-        saveData()
-        textOutput.insert(END, text)
-        textOutput.configure(state = 'disabled')
-        await at.event(nextButton, '<Button>')
-        at.start(gameLoop())
-    if answer == 'fight':
-        at.start(fight())
-    if answer == 'heal':
-        at.start(heal())
-    if answer == 'exit':
-        exitGame()
+    if options.__contains__(answer):
+        if answer == 'chop':
+            wood_gained = (random.randint(3, 8) * level)
+            textOutput.configure(state = 'normal')
+            textOutput.delete(0.0, END)
+            text = 'You go to the forest and chop down some trees.\n'
+            text += 'You gained ' + str(wood_gained) + ' wood.'
+            wood += wood_gained
+            saveData()
+            textOutput.insert(END, text)
+            textOutput.configure(state = 'disabled')
+            nextButton.configure(state = 'normal')
+            await at.event(nextButton, '<Button>')
+            at.start(gameLoop())
+        if answer == 'mine':      
+            textOutput.configure(state = 'normal')
+            textOutput.delete(0.0, END)
+            text = 'You went down into the mines to get some stone'
+            stone_gained = (random.randint(3, 8) * level)
+            if level < 5:
+                text += '.\n'
+                text += 'You gained ' + str(stone_gained) + ' stone.\n'
+            if level >= 5:
+                text += ', and ores.\n'
+                iron_ore_gained = (random.randint(2, 5) * level)
+                gold_ore_gained = (random.randint(1, 4) * level)
+                iron_ore += iron_ore_gained
+                gold_ore += gold_ore_gained
+                text += 'You gained ' + str(stone_gained) + ' stone.\n'
+                text += 'You gained ' + str(iron_ore_gained) + ' iron ore.\n'
+                text += 'You gained ' + str(gold_ore_gained) + ' gold ore.'
+            stone += stone_gained
+            saveData()
+            textOutput.insert(END, text)
+            textOutput.configure(state = 'disabled')
+            await at.event(nextButton, '<Button>')
+            at.start(gameLoop())
+        if answer == 'fight':
+            at.start(fight())
+        if answer == 'heal':
+            at.start(heal())
+        if answer == 'exit':
+            exitGame()
     else:
+        textOutput.configure(state = 'normal')
+        textOutput.delete(0.0, END)
+        text = 'That is not an option.'
+        await at.event(nextButton, '<Button>')
         at.start(gameLoop())
 
 async def fight():
@@ -214,33 +232,65 @@ async def heal():
     textOutput.delete(0.0, END)
     health_pots = small_health_pot + medium_health_pot + large_health_pot + max_health_pot
     mp_pots = small_mp_pot + medium_mp_pot + large_mp_pot + max_mp_pot
-    if (health_pots == 0) and (mp_pots == 0):
+    if health_pots > 0 and mp_pots > 0:
+        heal_options = []
+        heal_options.clear
+        heal_options,append('exit')
+        text = 'Which potions would you like to use?\n'
+        if health_pots > 0:
+            text += ('\nHealth Potions\n')
+        if small_health_pot > 0:
+            text += ('Small Health Potion x' + str(small_health_pot) + ' Restores 10 health points.\n')
+            heal_options.append('smallhealthpotion')
+            heal_options.append('smallhealth')
+        if medium_health_pot > 0:
+            text += ('Medium Health Potion x' + str(medium_health_pot) + ' Restores 35 health points.\n')
+            heal_options.append('mediumhealthpotion')
+            heal_options.append('mediumhealth')
+        if large_health_pot > 0:
+            text += ('Large Health Potion x' + str(large_health_pot) + ' Restores 80 health points.\n')
+            heal_options.append('largehealthpotion')
+            heal_options.append('largehealth')
+        if max_health_pot > 0:
+            text += ('Max Health Potion x' + str(max_health_pot) + ' Restores all your health points.\n')
+            heal_options.append('maxhealthpotion')
+            heal_options.append('maxhealth')
+        if mp_pots > 0:
+            text += ('\nMP Potions\n')
+        if small_mp_pot > 0:
+            text += ('Small MP Potion x' + str(small_mp_pot) + ' Restores 10 MP points.\n')
+            heal_options.append('smallmppotion')
+            heal_options.append('smallmp')
+        if medium_mp_pot > 0:
+            text += ('Medium MP Potion x' + str(medium_mp_pot) + ' Restores 35 MP points.\n')
+            heal_options.append('mediummppotion')
+            heal_options.append('meduimmp')
+        if large_mp_pot > 0:
+            text += ('Large MP Potion x' + str(large_mp_pot) + ' Restores 80 MP points.\n')
+            heal_options.append('largemppotion')
+            heal_options.append('largemp')
+        if max_mp_pot > 0:
+            text += ('Max MP Potion x' + str(max_mp_pot) + ' Restores all your MP points.\n')
+            heal_options.append('maxmppotion')
+            heal_options.append('maxmp')
+        textOutput.insert(END, text)
+        textOutput.configure(state = 'disabled')
+        submitButton.configure(state = 'normal')
+        playerAnswerBox.configure(state = 'normal')
+        await at.event(submitButton, '<Button>')
+        await at.sleep(500, after=submitButton.after)
+    else:
+        submitButton.configure(state = 'disabled')
         text = "You don't have any potions to use.\n"
         text += 'You might be able to buy some from the shop.'
-    else:
-        text = 'Which potions would you like to use?'
-        if small_health_pot > 0:
-            text += ('Small Health Potion x' + small_health_pot + ' Restores 10 health points.\n')
-        if medium_health_pot > 0:
-            text += ('Medium Health Potion x' + medium_health_pot + ' Restores 35 health points.\n')
-        if large_health_pot > 0:
-            text += ('Large Health Potion x' + large_health_pot + ' Restores 80 health points.\n')
-        if max_health_pot > 0:
-            text += ('Max Health Potion x' + max_health_pot + ' Restores all your health points.\n')
-        if small_mp_pot > 0:
-            text += ('Small MP Potion x' + small_mp_pot + ' Restores 10 MP points.\n')
-        if medium_mp_pot > 0:
-            text += ('Medium MP Potion x' + medium_mp_pot + ' Restores 35 MP points.\n')
-        if large_mp_pot > 0:
-            text += ('Large MP Potion x' + large_mp_pot + ' Restores 80 MP points.\n')
-        if max_mp_pot > 0:
-            text += ('Max MP Potion x' + max_mp_pot + ' Restores all your MP points.\n')
-    textOutput.insert(END, text)
-    textOutput.configure(state = 'disabled')
-    nextButton.configure(state = 'normal')
-    await at.event(nextButton, '<Button>')
-    saveInvData()
-    at.start(gameLoop())
+        textOutput.insert(END, text)
+        textOutput.configure(state = 'disabled')
+        nextButton.configure(state = 'normal')
+        await at.event(nextButton, '<Button>')
+        saveInvData()
+        at.start(gameLoop())
+    
+    
 
 def grabText():
     global answer
@@ -343,7 +393,7 @@ def saveInvData():
 
     f.write('small_health_pot = ' + str(small_health_pot) + '\n')
     f.write('medium_health_pot = ' + str(medium_health_pot) + '\n')
-    f.write('lagre_health_pot = ' + str(large_health_pot) + '\n')
+    f.write('large_health_pot = ' + str(large_health_pot) + '\n')
     f.write('max_health_pot = ' + str(max_health_pot) + '\n')
     f.write('small_mp_pot = ' + str(small_mp_pot) + '\n')
     f.write('medium_mp_pot = ' + str(medium_mp_pot) + '\n')
@@ -357,8 +407,7 @@ def exitGame():
     window.destroy()
     exit()
 
-#startButton = Button(window, text = 'Start', width = 6, command = startGame, bg = 'gray', fg = 'white')
-#startButton.grid(row = 4, column = 0, sticky = 'w')
+#Setup game Buttons
 nextButton = Button(window, text = 'Next', width = 6, bg = 'gray', fg = 'white')
 nextButton.grid(row = 4, column = 0, sticky = 'w')
 nextButton.configure(state = 'disabled')
