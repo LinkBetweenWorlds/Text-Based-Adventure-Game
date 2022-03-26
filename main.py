@@ -1,5 +1,7 @@
+import abc
 import json
-from typing import AnyStr
+from pathlib import WindowsPath
+from typing import AnyStr, Optional
 from warnings import _OptionError
 from player_data import *
 from monster_data import *
@@ -10,6 +12,7 @@ import random
 from tkinter import *
 import asynctkinter as at
 import time
+import string
 from PIL import Image, ImageTk
 
 answer = ""
@@ -18,30 +21,26 @@ answer = ""
 window = Tk()
 window.title('Xenorule')
 window.configure(background = 'black')
-window.geometry('960x480')
-window.minsize(920, 480)
-window.maxsize(920, 480)
+window.geometry('1280x720')
 window.resizable(width = NO, height = NO)
 ico = Image.open('appicon.png')
 photo = ImageTk.PhotoImage(ico)
 window.wm_iconphoto(False, photo)
 
-playerStatsOutput = Text(window, width = 57, height = 9, bg = 'black', fg = 'white')
+playerStatsOutput = Text(window, width = 60, height = 9, bg = 'black', fg = 'white', font = 'times 16')
 playerStatsOutput.grid(row = 0, column = 0, sticky = 'w')
 playerStatsOutput.configure(state = 'disabled')
-playerEquipOutput = Text(window, width = 57, height = 9, bg = 'black', fg = 'white')
+playerEquipOutput = Text(window, width = 60, height = 9, bg = 'black', fg = 'white', font = 'times 16')
 playerEquipOutput.grid(row = 0, column = 1, sticky = 'w')
 playerEquipOutput.configure(state = 'disabled')
-#playerInvOutput = Text(window, width = 50, height = 4, bg = "black", fg = "white")
-#playerInvOutput.grid(row = 0, column = 1, sticky = "w")
 
-textOutput = Text(window, width = 115, height = 10, wrap = WORD, bg = 'black', fg = 'white')
+textOutput = Text(window, width = 120, height = 10, wrap = WORD, bg = 'black', fg = 'white', font = 'times 16')
 textOutput.grid(row = 1, column = 0, columnspan = 2, sticky = 'w')
 textOutput.configure(state = 'disabled')
 
-Label(window, text = 'Answer:', bg = 'black', fg = 'white', font = 'none 12').grid(row = 2, column = 0, sticky = 'w')
+Label(window, text = 'Answer:', bg = 'black', fg = 'white', font = 'times 16').grid(row = 2, column = 0, sticky = 'w')
 
-playerAnswerBox = Text(window, width = 115, height = 4, wrap = WORD, bg = 'black', fg = 'white')
+playerAnswerBox = Entry(window, width = 120, bg = 'black', fg = 'white', font = 'times 16')
 playerAnswerBox.grid(row = 3, column = 0, columnspan = 2, sticky = 'w')
 playerAnswerBox.configure(state = 'disabled')
 
@@ -121,8 +120,6 @@ async def gameLoop():
     updatePlayerStats()
 
     #Ask question
-    textOutput.configure(state = 'normal')
-    textOutput.delete(0.0, END)
     text = ''
     text += ('What would you like to do?\n')
     #Options
@@ -152,8 +149,7 @@ async def gameLoop():
     if level >= 15:
         text += ('Enchant\n')
         options.append('enchant')
-    textOutput.insert(END, text)
-    textOutput.configure(state = 'disabled')
+    setTextOutput(text)
     playerAnswerBox.configure(state = 'normal')
     submitButton.configure(state = 'normal')
     await at.event(submitButton, '<Button>')
@@ -202,9 +198,8 @@ async def gameLoop():
         if answer == 'exit':
             exitGame()
     else:
-        textOutput.configure(state = 'normal')
-        textOutput.delete(0.0, END)
         text = 'That is not an option.'
+        setTextOutput(text)
         await at.event(nextButton, '<Button>')
         at.start(gameLoop())
 
@@ -222,83 +217,145 @@ async def fight():
     at.start(gameLoop())
 
 async def heal():
-    print('Start heal')
-    await at.sleep(500, after = submitButton.after)
     global health
     global health_max
     global mp
     global mp_max
-    textOutput.configure(state = 'normal')
-    textOutput.delete(0.0, END)
+    global small_health_pot
+    global medium_health_pot
+    global large_health_pot
+    global max_health_pot
+    global small_mp_pot
+    global medium_mp_pot
+    global large_mp_pot
+    global max_mp_pot
     health_pots = small_health_pot + medium_health_pot + large_health_pot + max_health_pot
     mp_pots = small_mp_pot + medium_mp_pot + large_mp_pot + max_mp_pot
-    if health_pots > 0 and mp_pots > 0:
-        heal_options = []
-        heal_options.clear
-        heal_options,append('exit')
-        text = 'Which potions would you like to use?\n'
-        if health_pots > 0:
-            text += ('\nHealth Potions\n')
-        if small_health_pot > 0:
-            text += ('Small Health Potion x' + str(small_health_pot) + ' Restores 10 health points.\n')
-            heal_options.append('smallhealthpotion')
-            heal_options.append('smallhealth')
-        if medium_health_pot > 0:
-            text += ('Medium Health Potion x' + str(medium_health_pot) + ' Restores 35 health points.\n')
-            heal_options.append('mediumhealthpotion')
-            heal_options.append('mediumhealth')
-        if large_health_pot > 0:
-            text += ('Large Health Potion x' + str(large_health_pot) + ' Restores 80 health points.\n')
-            heal_options.append('largehealthpotion')
-            heal_options.append('largehealth')
-        if max_health_pot > 0:
-            text += ('Max Health Potion x' + str(max_health_pot) + ' Restores all your health points.\n')
-            heal_options.append('maxhealthpotion')
-            heal_options.append('maxhealth')
-        if mp_pots > 0:
-            text += ('\nMP Potions\n')
-        if small_mp_pot > 0:
-            text += ('Small MP Potion x' + str(small_mp_pot) + ' Restores 10 MP points.\n')
-            heal_options.append('smallmppotion')
-            heal_options.append('smallmp')
-        if medium_mp_pot > 0:
-            text += ('Medium MP Potion x' + str(medium_mp_pot) + ' Restores 35 MP points.\n')
-            heal_options.append('mediummppotion')
-            heal_options.append('meduimmp')
-        if large_mp_pot > 0:
-            text += ('Large MP Potion x' + str(large_mp_pot) + ' Restores 80 MP points.\n')
-            heal_options.append('largemppotion')
-            heal_options.append('largemp')
-        if max_mp_pot > 0:
-            text += ('Max MP Potion x' + str(max_mp_pot) + ' Restores all your MP points.\n')
-            heal_options.append('maxmppotion')
-            heal_options.append('maxmp')
-        textOutput.insert(END, text)
-        textOutput.configure(state = 'disabled')
-        submitButton.configure(state = 'normal')
-        playerAnswerBox.configure(state = 'normal')
-        await at.event(submitButton, '<Button>')
-        await at.sleep(500, after=submitButton.after)
+    if (health < health_max) and (mp < mp_max):
+        if health_pots > 0 and mp_pots > 0:
+            heal_options = []
+            heal_options.clear
+            heal_options.append('exit')
+            text = 'Which potions would you like to use?\n'
+            if health_pots > 0:
+                text += ('\nHealth Potions\n')
+            if small_health_pot > 0:
+                text += ('Small Health Potion x' + str(small_health_pot) + ' Restores 10 health points.\n')
+                heal_options.append('smallhealthpotion')
+                heal_options.append('smallhealth')
+            if medium_health_pot > 0:
+                text += ('Medium Health Potion x' + str(medium_health_pot) + ' Restores 35 health points.\n')
+                heal_options.append('mediumhealthpotion')
+                heal_options.append('mediumhealth')
+            if large_health_pot > 0:
+                text += ('Large Health Potion x' + str(large_health_pot) + ' Restores 80 health points.\n')
+                heal_options.append('largehealthpotion')
+                heal_options.append('largehealth')
+            if max_health_pot > 0:
+                text += ('Max Health Potion x' + str(max_health_pot) + ' Restores all your health points.\n')
+                heal_options.append('maxhealthpotion')
+                heal_options.append('maxhealth')
+            if mp_pots > 0:
+                text += ('\nMP Potions\n')
+            if small_mp_pot > 0:
+                text += ('Small MP Potion x' + str(small_mp_pot) + ' Restores 10 MP points.\n')
+                heal_options.append('smallmppotion')
+                heal_options.append('smallmp')
+            if medium_mp_pot > 0:
+                text += ('Medium MP Potion x' + str(medium_mp_pot) + ' Restores 35 MP points.\n')
+                heal_options.append('mediummppotion')
+                heal_options.append('meduimmp')
+            if large_mp_pot > 0:
+                text += ('Large MP Potion x' + str(large_mp_pot) + ' Restores 80 MP points.\n')
+                heal_options.append('largemppotion')
+                heal_options.append('largemp')
+            if max_mp_pot > 0:
+                text += ('Max MP Potion x' + str(max_mp_pot) + ' Restores all your MP points.\n')
+                heal_options.append('maxmppotion')
+                heal_options.append('maxmp')
+            setTextOutput(text)
+            submitButton.configure(state = 'normal')
+            playerAnswerBox.configure(state = 'normal')
+            await at.event(submitButton, '<Button>')
+            await at.sleep(750, after=submitButton.after)
+            print(answer)
+            print(heal_options)
+            if heal_options.__contains__(answer):
+                #Health Potions
+                if answer == 'smallhealthpotion' or answer == 'smallhealth':
+                    small_health_pot -= 1
+                    health += 10
+                    text = 'You gained 10 health points.'
+                if answer == 'mediumhealthpotion' or answer == 'mediumhealth':
+                    medium_health_pot -= 1
+                    health += 35
+                    text = 'You gained 35 health points.'
+                if answer == 'largehealthpotion' or answer == 'largehealth':
+                    large_health_potions -= 1
+                    health += 80
+                    text = 'You gained 80 health points.'
+                if answer == 'maxhealthpotion' or answer == 'maxhealth':
+                    max_health_pot -= 1
+                    health = health_max
+                    text = 'You gained all your health potions back.'
+                #MP Potions
+                if answer == 'smallmppotion' or answer == 'smallmp':
+                    small_mp_pot -= 1
+                    mp += 10
+                    text = 'You gained 10 MP points.'
+                if answer == 'mediummpption' or answer == 'mediummp':
+                    medium_mp_pot -= 1
+                    mp += 35
+                    text = 'You gained 35 MP points.'
+                if answer == 'largehealthpotion' or answer == 'largehealth':
+                    large_mp_pot -= 1
+                    mp += 80
+                    text = 'You gained 80 MP points.'
+                if answer == 'maxmppotion' or answer == 'maxmp':
+                    max_mp_pot -= 1
+                    mp = mp_max
+                    text = 'You gained all your MP points back.'
+            else:
+                text = "You don't have that kind of potions."     
+            setTextOutput(text)
+            if health > health_max:
+                health = health_max
+            if mp > mp_max:
+                mp = mp_max
+            nextButton.configure(state = 'normal')
+            await at.event(nextButton, '<Button>')
+            saveInvData()
+            at.start(gameLoop())
+        else:
+            submitButton.configure(state = 'disabled')
+            text = "You don't have any potions to use.\n"
+            text += 'You might be able to buy some from the shop.'
+            setTextOutput(text)
+            nextButton.configure(state = 'normal')
+            await at.event(nextButton, '<Button>')
+            saveInvData()
+            at.start(gameLoop())
     else:
-        submitButton.configure(state = 'disabled')
-        text = "You don't have any potions to use.\n"
-        text += 'You might be able to buy some from the shop.'
-        textOutput.insert(END, text)
-        textOutput.configure(state = 'disabled')
+        text = 'You are already at max health and MP.\n'
+        text += "So you don't need to heal."
+        setTextOutput(text)
         nextButton.configure(state = 'normal')
         await at.event(nextButton, '<Button>')
         saveInvData()
         at.start(gameLoop())
     
-    
-
 def grabText():
     global answer
     submitButton.configure(state = 'disabled')
-    answer = playerAnswerBox.get(0.0, END)
-    answer = answer.lower().strip()
-    playerAnswerBox.delete(0.0, END)
+    answer = playerAnswerBox.get().replace(" ", "").lower()
+    playerAnswerBox.delete(0, END)
     playerAnswerBox.configure(state = 'disabled')
+
+def setTextOutput(text):
+    textOutput.configure(state = 'normal')
+    textOutput.delete(0.0, END)
+    textOutput.insert(END, text)
+    textOutput.configure(state = 'disabled')
 
 async def check_levelup():
     global level
@@ -341,10 +398,8 @@ def updatePlayerStats():
     stats += ('MP: ' + str(mp) + ' / ' + str(mp_max) + '\n')
     stats += ('Wood: ' + str(wood) + '\n')
     stats += ('Stone: ' + str(stone) + '\n')
-    stats += ('Iron Ore: ' + str(iron_ore))
-    stats += (' | Iron: ' + str(iron) + '\n')
-    stats += ('Gold Ore: ' + str(gold_ore))
-    stats += (' | Gold: ' + str(gold) +'\n')
+    stats += ('Iron Ore: ' + str(iron_ore) + ' / Iron: ' + str(iron) + '\n')
+    stats += ('Gold Ore: ' + str(gold_ore) + ' / Gold: ' + str(gold) + '\n')
     stats += ('Money: ' + str(money))
     playerStatsOutput.insert(END, stats)
     playerStatsOutput.configure(state = 'disabled')
@@ -404,30 +459,20 @@ def saveInvData():
 
 def exitGame():
     saveData()
+    saveInvData()
     window.destroy()
     exit()
 
-#Setup game Buttons
-nextButton = Button(window, text = 'Next', width = 6, bg = 'gray', fg = 'white')
+#Setup game buttons
+nextButton = Button(window, text = 'Next', width = 6, bg = 'gray', fg = 'white', font = 'times 12')
 nextButton.grid(row = 4, column = 0, sticky = 'w')
 nextButton.configure(state = 'disabled')
-submitButton = Button(window, text = 'Submit', width = 6, command = grabText, bg = 'gray', fg = 'white')
+submitButton = Button(window, text = 'Submit', width = 6, command = grabText, bg = 'gray', fg = 'white', font = 'times 12')
 submitButton.grid(row = 5, column = 0, sticky = 'w')
 submitButton.configure(state = 'disabled')
-exitButton = Button(window, text = 'Exit', width = 6, command = exitGame, bg = 'gray', fg = 'white')
+exitButton = Button(window, text = 'Exit', width = 6, command = exitGame, bg = 'gray', fg = 'white', font = 'times 12')
 exitButton.grid(row = 6, column = 0, sticky = 'w')
 
-#async def some_task():
-#    #label['text'] = 'Something'
-#    playerAnswerBox.configure(state = 'normal')
-#    event = await at.event(testButton, '<Button>')
-
-#    test = playerAnswerBox.get(0.0, END)
-
-#    print("Button pressed")
-#    print(test)
-
-#at.start(some_task())
 
 at.start(startGame())
 
