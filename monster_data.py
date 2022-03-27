@@ -1,14 +1,31 @@
 #Enemy Locations
-green_fleid_enemy_list = ['Green Slime', 'Bat']
+enemyList = {
+    'Green Field': ['greenSlime', 'bat'],
+    'greenSlime': {
+        'name': 'Green Slime',
+        'hp': 5,
+        'damage': 1,
+        'defense': 0,
+        'money_min': 1,
+        'money_max': 4,
+        'exp_min': 1,
+        'exp_max': 3,
+        'item_drop': ['small_health_pot', 'small_mp_pot']
+        },
+    'bat': {
+        'name': 'Bat',
+        'hp': 3,
+        'damage': 1,
+        'defense': 0,
+        'money_min': 1,
+        'money_max': 2,
+        'exp_min': 1,
+        'exp_max': 2,
+        'item_drop': ['small_health_pot', 'small_mp_pot']
+        }
+    }
 #Green Slime
-green_slime_hp = 5
-green_slime_damage = 1
-green_slime_defense = 0
-green_slime_money_min = 1
-green_slime_money_max = 3
-green_slime_exp_min = 1
-green_slime_exp_max = 3
-green_slime_item_drop = ['small_health_potions', 'small_mp_potions']
+
 
 #Bat
-bat_hp = 3
+

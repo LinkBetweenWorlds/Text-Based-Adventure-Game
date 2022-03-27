@@ -1,19 +1,16 @@
-import abc
 import json
-from pathlib import WindowsPath
-from typing import AnyStr, Optional
-from warnings import _OptionError
+from os import curdir
+import random
+from tkinter import *
+import asynctkinter as at
+from PIL import Image, ImageTk
+
 from player_data import *
 from monster_data import *
 from weapon_data import *
 from armor_data import *
 from player_inventory import *
-import random
-from tkinter import *
-import asynctkinter as at
-import time
-import string
-from PIL import Image, ImageTk
+from battle_data import *
 
 answer = ""
 
@@ -34,7 +31,7 @@ playerEquipOutput = Text(window, width = 60, height = 9, bg = 'black', fg = 'whi
 playerEquipOutput.grid(row = 0, column = 1, sticky = 'w')
 playerEquipOutput.configure(state = 'disabled')
 
-textOutput = Text(window, width = 120, height = 10, wrap = WORD, bg = 'black', fg = 'white', font = 'times 16')
+textOutput = Text(window, width = 120, height = 15, wrap = WORD, bg = 'black', fg = 'white', font = 'times 16')
 textOutput.grid(row = 1, column = 0, columnspan = 2, sticky = 'w')
 textOutput.configure(state = 'disabled')
 
@@ -42,7 +39,6 @@ Label(window, text = 'Answer:', bg = 'black', fg = 'white', font = 'times 16').g
 
 playerAnswerBox = Entry(window, width = 120, bg = 'black', fg = 'white', font = 'times 16')
 playerAnswerBox.grid(row = 3, column = 0, columnspan = 2, sticky = 'w')
-playerAnswerBox.configure(state = 'disabled')
 
 async def startGame():
     global name
@@ -82,16 +78,16 @@ async def startGame():
         await at.sleep(500, after = submitButton.after)
         if answer == 'mage':
             type_class = '"Mage"'
-            weapon = mage_weapons[0]
-            weapon_inventory.insert(0, mage_weapons[0])
+            weapon = Mage['weapons'][0]
+            weapon_inventory.insert(0, weapon)
         if answer == 'paladin':
             type_class = '"Paladin"'
-            weapon = paladin_weapons[0]
-            weapon_inventory.insert(0, paladin_weapons[0])
+            weapon = Paladin['weapons'][0]
+            weapon_inventory.insert(0, weapon)
         if answer == 'archer':
             type_class = '"Archer"'
-            weapon = archer_weapons[0]
-            weapon_inventory.insert(0, archer_weapons[0])
+            weapon = Archer['weapons'][0]
+            weapon_inventory.insert(0, weapon)
         saveData()
         if name == 'None':
             at.start(startGame())
@@ -114,7 +110,6 @@ async def gameLoop():
     global money
 
     nextButton.configure(state = 'disabled')
-    submitButton.configure(state = 'normal')
 
     #Update Player Stats
     updatePlayerStats()
@@ -146,11 +141,13 @@ async def gameLoop():
     if level >= 10:
         text += ('Quests\n')
         options.append('quests')
+    if level >= 12:
+        text += ('Dojo\n')
+        options.append('dojo')
     if level >= 15:
         text += ('Enchant\n')
         options.append('enchant')
     setTextOutput(text)
-    playerAnswerBox.configure(state = 'normal')
     submitButton.configure(state = 'normal')
     await at.event(submitButton, '<Button>')
     await at.sleep(500, after=submitButton.after)
@@ -168,7 +165,7 @@ async def gameLoop():
             nextButton.configure(state = 'normal')
             await at.event(nextButton, '<Button>')
             at.start(gameLoop())
-        if answer == 'mine':      
+        if answer == 'mine':
             textOutput.configure(state = 'normal')
             textOutput.delete(0.0, END)
             text = 'You went down into the mines to get some stone'
@@ -209,12 +206,39 @@ async def fight():
     global health_max
     global mp
     global mp_max
-    textOutput.configure(state = 'normal')
-    textOutput.delete(0.0, END)
-    text = 'Hello'
-    textOutput.insert(END, text)
-    await at.event(nextButton, '<Button>')
-    at.start(gameLoop())
+    global current_enemy
+    global current_enemy_health
+    global turn_count
+
+    if current_enemy == 'none':
+        num = random.randint(0, len(enemyList[world]) - 1)
+        world_enemy_list = enemyList[world]
+        current_enemy = world_enemy_list[num]
+        enemy_data = dict(enemyList[current_enemy])
+        current_enemy_health = enemy_data['hp']
+        turn_count = 1
+        saveBattleData()
+        at.start(fight())
+    if current_enemy != "none":
+        enemy_data = dict(enemyList[current_enemy])
+        text = ('You wondered around the ' + world + ' and find a ' + enemy_data['name'] + '\n')
+        text += ('Do you want to fight it? (yes/no)')
+        setTextOutput(text)
+        submitButton.configure(state = 'normal')
+        await at.event(submitButton, '<Button>')
+        await at.sleep(500, after=submitButton.after)
+        if answer == 'yes':
+            text = ('Turn Count: ' + str(turn_count) + '\n')
+            text += ('Currently fighting: ' + enemy_data['name'] + '\n')
+            text += ('Enemy Health: ' + str(current_enemy_health) + ' / ' + str(enemy_data['hp']))
+            setTextOutput(text)
+        else:
+            text = 'You return back to camp!'
+            setTextOutput(text)
+            nextButton.configure(state = 'normal')
+            await at.event(nextButton, '<Button>')
+            at.start(gameLoop())
+            
 
 async def heal():
     global health
@@ -277,9 +301,7 @@ async def heal():
             submitButton.configure(state = 'normal')
             playerAnswerBox.configure(state = 'normal')
             await at.event(submitButton, '<Button>')
-            await at.sleep(750, after=submitButton.after)
-            print(answer)
-            print(heal_options)
+            await at.sleep(500, after=submitButton.after)
             if heal_options.__contains__(answer):
                 #Health Potions
                 if answer == 'smallhealthpotion' or answer == 'smallhealth':
@@ -349,7 +371,6 @@ def grabText():
     submitButton.configure(state = 'disabled')
     answer = playerAnswerBox.get().replace(" ", "").lower()
     playerAnswerBox.delete(0, END)
-    playerAnswerBox.configure(state = 'disabled')
 
 def setTextOutput(text):
     textOutput.configure(state = 'normal')
@@ -417,29 +438,29 @@ def updatePlayerStats():
 def saveData():
     f = open("player_data.py", "w")
 
-    f.write("name = \"" + name + "\"\n")
-    f.write("level = " + str(level) + "\n")
+    f.write('name = "' + name + '"\n')
+    f.write('level = ' + str(level) + '\n')
     f.write('type_class = "' + type_class + '"\n')
-    f.write("exp = " + str(exp) + "\n")
-    f.write("health = " + str(health) + "\n")
-    f.write("health_max = " + str(health_max) + "\n")
-    f.write("mp = " + str(mp) + "\n")
-    f.write("mp_max = " + str(mp_max) + "\n")
-    f.write("wood = " + str(wood) + "\n")
-    f.write("stone = " + str(stone) + "\n")
-    f.write("iron_ore = " + str(iron_ore) + "\n")
-    f.write("iron = " + str(iron) + "\n")
-    f.write("gold_ore = " + str(gold_ore) + "\n")
-    f.write("gold = " + str(gold) + "\n")
-    f.write("money = " + str(money) + "\n")
+    f.write('exp = ' + str(exp) + '\n')
+    f.write('health = ' + str(health) + '\n')
+    f.write('health_max = ' + str(health_max) + '\n')
+    f.write('mp = ' + str(mp) + '\n')
+    f.write('mp_max = ' + str(mp_max) + '\n')
+    f.write('wood = ' + str(wood) + '\n')
+    f.write('stone = ' + str(stone) + '\n')
+    f.write('iron_ore = ' + str(iron_ore) + '\n')
+    f.write('iron = ' + str(iron) + '\n')
+    f.write('gold_ore = ' + str(gold_ore) + '\n')
+    f.write('gold = ' + str(gold) + '\n')
+    f.write('money = ' + str(money) + '\n')
     f.write('weapon = "' + weapon + '"\n')
-    f.write("weapon_inventory = " + str(weapon_inventory) + "\n")
-    f.write("armor = \"" + armor + "\"\n")
-    f.write("armor_inventory = " + str(armor_inventory) + "\n")
-    f.write("inventory = " + str(inventory) + "\n")
-    f.write("world = " + str(world) + "\n")
-    f.write("quests_completed = " + str(quests_completed) + "\n")
-    f.write('quest_current = "' + quest_current + '"\n')
+    f.write('weapon_inventory = ' + str(weapon_inventory) + '\n')
+    f.write('armor = "' + armor + '"\n')
+    f.write('armor_inventory = ' + str(armor_inventory) + '\n')
+    f.write('inventory = ' + str(inventory) + '\n')
+    f.write('world = "' + world + '"\n')
+    f.write('quests_completed = ' + str(quests_completed) + '\n')
+    f.write('quest_current = "' + quest_current + '"')
 
     f.close()
 
@@ -453,7 +474,16 @@ def saveInvData():
     f.write('small_mp_pot = ' + str(small_mp_pot) + '\n')
     f.write('medium_mp_pot = ' + str(medium_mp_pot) + '\n')
     f.write('large_mp_pot = ' + str(large_mp_pot) + '\n')
-    f.write('max_mp_pot = ' + str(max_mp_pot) + '\n')
+    f.write('max_mp_pot = ' + str(max_mp_pot))
+
+    f.close()
+
+def saveBattleData():
+    f = open('battle_data.py', 'w')
+
+    f.write('current_enemy = "' + current_enemy + '"\n')
+    f.write('current_enemy_health = ' + str(current_enemy_health) + '\n')
+    f.write('turn_count = ' + str(turn_count))
 
     f.close()
 
