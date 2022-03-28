@@ -197,6 +197,7 @@ async def gameLoop():
     else:
         text = 'That is not an option.'
         setTextOutput(text)
+        nextButton.configure(state = 'normal')
         await at.event(nextButton, '<Button>')
         at.start(gameLoop())
 
@@ -209,6 +210,18 @@ async def fight():
     global current_enemy
     global current_enemy_health
     global turn_count
+    global currently_fighting
+    global small_health_pot
+    global medium_health_pot
+    global large_health_pot
+    global max_health_pot
+    global small_mp_pot
+    global medium_mp_pot
+    global large_mp_pot
+    global max_mp_pot
+    global money
+
+    nextButton.configure(state = 'disabled')
 
     if current_enemy == 'none':
         num = random.randint(0, len(enemyList[world]) - 1)
@@ -221,23 +234,104 @@ async def fight():
         at.start(fight())
     if current_enemy != "none":
         enemy_data = dict(enemyList[current_enemy])
-        text = ('You wondered around the ' + world + ' and find a ' + enemy_data['name'] + '\n')
-        text += ('Do you want to fight it? (yes/no)')
-        setTextOutput(text)
-        submitButton.configure(state = 'normal')
-        await at.event(submitButton, '<Button>')
-        await at.sleep(500, after=submitButton.after)
-        if answer == 'yes':
-            text = ('Turn Count: ' + str(turn_count) + '\n')
-            text += ('Currently fighting: ' + enemy_data['name'] + '\n')
-            text += ('Enemy Health: ' + str(current_enemy_health) + ' / ' + str(enemy_data['hp']))
+        player_data = dict(type_class_weapons[type_class])
+        if currently_fighting == False:
+            text = ('You wondered around the ' + world.lower() + ' and find a ' + enemy_data['name'].lower() + '.\n')
+            text += ('Do you want to fight it? (yes/no)')
             setTextOutput(text)
+            submitButton.configure(state = 'normal')
+            await at.event(submitButton, '<Button>')
+            await at.sleep(500, after=submitButton.after)
+            if answer == 'yes':
+                currently_fighting = True
+                text = ('You started to fight ' + enemy_data['name'].lower() +'.\n')
+                setTextOutput(text)
+                saveBattleData()
+                nextButton.configure(state = 'normal')
+                await at.event(nextButton, '<Button>')
+                at.start(fight())
+            else:
+                text = 'You return back to camp!'
+                setTextOutput(text)
+                nextButton.configure(state = 'normal')
+                await at.event(nextButton, '<Button>')
+                at.start(gameLoop())
         else:
-            text = 'You return back to camp!'
+            text = ('Turn Count: ' + str(turn_count) + '\n')
+            text += ('Fighting: ' + enemy_data['name'] + '\n')
+            text += ('Enemy Health: ' + str(current_enemy_health) + ' / ' + str(enemy_data['hp']) + '\n')
+            text += ('\n')
+            text += ('What attack would you like to use?\n')
+            player_attacks = player_data['attacks']
+            player_attack_options = []
+            for i in player_attacks:
+                text += (str(i) + '\n')
+                options = str(i).lower()
+                player_attack_options.append(options)
             setTextOutput(text)
-            nextButton.configure(state = 'normal')
-            await at.event(nextButton, '<Button>')
-            at.start(gameLoop())
+            await at.event(submitButton, '<Button>')
+            await at.sleep(500, after=submitButton.after)
+            if player_attack_options.__contains__(answer):
+                if answer == 'attack':
+                    text = ('You attacked the ' + enemy_data['name'].lower() + '\n')
+                    damage = player_data['attack_damage'][0] + player_data['weapon_damage'][0]
+                    text += ('You dealt ' + str(damage) + ' damage to ' + enemy_data['name'].lower())
+                    setTextOutput(text)
+                    current_enemy_health -= damage
+                    nextButton.configure(state = 'normal')
+                    await at.event(nextButton, '<Button>')
+                    nextButton.configure(state = 'disabled')
+                    if current_enemy_health < 0:
+                        exp_gained = (random.randint(enemy_data['exp_min'], enemy_data['exp_max']) * level)
+                        money_gained = (random.randint(enemy_data['money_min'], enemy_data['money_max']) * level)
+                        item_gained = random.choice(enemy_data['item_drop'])
+                        text = ('You defeated ' + enemy_data['name'].lower() + '.\n')                     
+                        text += ('You gained ' + str(exp_gained) + ' exp.\n')
+                        exp += exp_gained
+                        text += ('You gained ' + str(money_gained) + ' money.\n')
+                        money += money_gained
+                        if item_gained == 'small_health_pot':
+                            small_health_pot += 1
+                            item = 'Small Health Potion'
+                        if item_gained == 'medium_health_pot':
+                            medium_health_pot += 1
+                            item = 'Medium Health Potion'
+                        if item_gained == 'large_health_pot':
+                            large_health_pot += 1
+                            item = 'Large Health Potion'
+                        if item_gained == 'max_health_pot':
+                            max_health_pot += 1
+                            item == 'Max Health Potion'
+                        if item_gained == 'small_mp_pot':
+                            small_mp_pot += 1
+                            item = 'Small MP Potion'
+                        if item_gained == 'medium_mp_pot':
+                            medium_mp_pot += 1
+                            item = 'Medium MP Potion'
+                        if item_gained == 'large_mp_pot':
+                            large_mp_pot += 1
+                            item = 'Large MP Potion'
+                        if item_gained == 'max_mp_pot':
+                            max_mp_pot += 1
+                            item = 'Max MP Potion'
+                        text += ('You got a ' + item + '.\n')
+                        setTextOutput(text)
+                        current_enemy = 'none'
+                        currently_fighting = False
+                        saveAllData()
+                        nextButton.configure(state = 'normal')
+                        await at.event(nextButton, '<Button>')
+                        nextButton.configure(state = 'disabled')
+                        at.start(check_levelup())
+                    else:
+                        turn_count += 1
+                        at.start(fight())
+            else:
+                text = 'That is not an attack.'
+                setTextOutput(text)
+                nextButton.configure(state = 'normal')
+                await at.event(nextButton, '<Button>')
+                at.start(fight())
             
 
 async def heal():
@@ -368,7 +462,6 @@ async def heal():
     
 def grabText():
     global answer
-    submitButton.configure(state = 'disabled')
     answer = playerAnswerBox.get().replace(" ", "").lower()
     playerAnswerBox.delete(0, END)
 
@@ -483,13 +576,18 @@ def saveBattleData():
 
     f.write('current_enemy = "' + current_enemy + '"\n')
     f.write('current_enemy_health = ' + str(current_enemy_health) + '\n')
-    f.write('turn_count = ' + str(turn_count))
+    f.write('turn_count = ' + str(turn_count) + '\n')
+    f.write('currently_fighting = ' + str(currently_fighting))
 
     f.close()
 
-def exitGame():
+def saveAllData():
     saveData()
     saveInvData()
+    saveBattleData()
+
+def exitGame():
+    saveAllData()
     window.destroy()
     exit()
 
