@@ -24,13 +24,13 @@ ico = Image.open('appicon.png')
 photo = ImageTk.PhotoImage(ico)
 window.wm_iconphoto(False, photo)
 
+#Text box
 playerStatsOutput = Text(window, width = 60, height = 9, bg = 'black', fg = 'white', font = 'times 16')
 playerStatsOutput.grid(row = 0, column = 0, sticky = 'w')
 playerStatsOutput.configure(state = 'disabled')
 playerEquipOutput = Text(window, width = 60, height = 9, bg = 'black', fg = 'white', font = 'times 16')
 playerEquipOutput.grid(row = 0, column = 1, sticky = 'w')
 playerEquipOutput.configure(state = 'disabled')
-
 textOutput = Text(window, width = 120, height = 15, wrap = WORD, bg = 'black', fg = 'white', font = 'times 16')
 textOutput.grid(row = 1, column = 0, columnspan = 2, sticky = 'w')
 textOutput.configure(state = 'disabled')
@@ -150,7 +150,7 @@ async def gameLoop():
     setTextOutput(text)
     submitButton.configure(state = 'normal')
     await at.event(submitButton, '<Button>')
-    await at.sleep(500, after=submitButton.after)
+    await at.sleep(250, after=submitButton.after)
     if options.__contains__(answer):
         if answer == 'chop':
             wood_gained = (random.randint(3, 8) * level)
@@ -187,6 +187,8 @@ async def gameLoop():
             at.start(fight())
         if answer == 'heal':
             at.start(heal())
+        if answer == 'shop':
+            at.start(shop())
         if answer == 'exit':
             exitGame()
     else:
@@ -218,6 +220,7 @@ async def fight():
 
     nextButton.configure(state = 'disabled')
     updatePlayerStats()
+    damage = 0
 
     if current_enemy == 'none':
         num = random.randint(0, len(enemyList[world]) - 1)
@@ -237,7 +240,7 @@ async def fight():
             setTextOutput(text)
             submitButton.configure(state = 'normal')
             await at.event(submitButton, '<Button>')
-            await at.sleep(500, after=submitButton.after)
+            await at.sleep(250, after=submitButton.after)
             if answer == 'yes':
                 currently_fighting = True
                 text = ('You started to fight ' + enemy_data['name'].lower() +'.\n')
@@ -245,6 +248,7 @@ async def fight():
                 saveBattleData()
                 nextButton.configure(state = 'normal')
                 await at.event(nextButton, '<Button>')
+                nextButton.configure(state = 'disabled')
                 at.start(fight())
             else:
                 text = 'You return back to camp!'
@@ -266,18 +270,20 @@ async def fight():
                 player_attack_options.append(options)
             setTextOutput(text)
             await at.event(submitButton, '<Button>')
-            await at.sleep(500, after=submitButton.after)
+            await at.sleep(250, after=submitButton.after)
             if player_attack_options.__contains__(answer):
                 if answer == 'attack':
+                    print('Player Attack')
                     text = ('You attacked the ' + enemy_data['name'].lower() + '\n')
                     damage = player_data['attack_damage'][0] + player_data['weapon_damage'][0]
+                    print('Player damage: ' + str(damage))
                     text += ('You dealt ' + str(damage) + ' damage to ' + enemy_data['name'].lower())
                     setTextOutput(text)
                     current_enemy_health -= damage
+                    print('Enemy health: ' + str(current_enemy_health))
                     nextButton.configure(state = 'normal')
                     await at.event(nextButton, '<Button>')
-                    nextButton.configure(state = 'disabled')
-                    if current_enemy_health < 0:
+                    if current_enemy_health <= 0:
                         exp_gained = (random.randint(enemy_data['exp_min'], enemy_data['exp_max']) * level)
                         money_gained = (random.randint(enemy_data['money_min'], enemy_data['money_max']) * level)
                         item_gained = random.choice(enemy_data['item_drop'])
@@ -322,6 +328,7 @@ async def fight():
                     else:
                         enemy_damage = random.randint(enemy_data['damage_min'], enemy_data['damage_max'])
                         text = ('The ' + enemy_data['name'].lower() + ' dealt ' + str(enemy_damage) + ' damage to you!\n')
+                        print('Enemy damage: ' + str(enemy_damage))
                         setTextOutput(text)
                         turn_count += 1
                         health -= enemy_damage
@@ -360,7 +367,13 @@ async def fight():
                 await at.event(nextButton, '<Button>')
                 at.start(fight())
             
-
+async def shop():
+    text = 'Welcome to the shop!\n'
+    text += 'What would you like to buy.'
+    setTextOutput(text)
+    nextButton.configure(state = 'normal')
+    await at.event(nextButton, '<Button>')
+    at.start(gameLoop())
 async def heal():
     global health
     global health_max

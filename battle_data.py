@@ -1,4 +1,4 @@
-current_enemy = "none"
-current_enemy_health = 1
-turn_count = 3
-currently_fighting = False
+current_enemy = "zombie"
+current_enemy_health = 2
+turn_count = 4
+currently_fighting = True
