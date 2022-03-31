@@ -4,7 +4,8 @@ enemyList = {
     'greenSlime': {
         'name': 'Green Slime',
         'hp': 5,
-        'damage': 1,
+        'damage_min': 1,
+        'damage_max': 2,
         'defense': 0,
         'money_min': 1,
         'money_max': 4,
@@ -15,7 +16,8 @@ enemyList = {
     'bat': {
         'name': 'Bat',
         'hp': 3,
-        'damage': 1,
+        'damage_min': 1,
+        'damage_max': 2,
         'defense': 0,
         'money_min': 1,
         'money_max': 2,

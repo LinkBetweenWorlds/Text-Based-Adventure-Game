@@ -154,20 +154,15 @@ async def gameLoop():
     if options.__contains__(answer):
         if answer == 'chop':
             wood_gained = (random.randint(3, 8) * level)
-            textOutput.configure(state = 'normal')
-            textOutput.delete(0.0, END)
             text = 'You go to the forest and chop down some trees.\n'
             text += 'You gained ' + str(wood_gained) + ' wood.'
             wood += wood_gained
             saveData()
-            textOutput.insert(END, text)
-            textOutput.configure(state = 'disabled')
+            setTextOutput(text)
             nextButton.configure(state = 'normal')
             await at.event(nextButton, '<Button>')
             at.start(gameLoop())
         if answer == 'mine':
-            textOutput.configure(state = 'normal')
-            textOutput.delete(0.0, END)
             text = 'You went down into the mines to get some stone'
             stone_gained = (random.randint(3, 8) * level)
             if level < 5:
@@ -184,8 +179,8 @@ async def gameLoop():
                 text += 'You gained ' + str(gold_ore_gained) + ' gold ore.'
             stone += stone_gained
             saveData()
-            textOutput.insert(END, text)
-            textOutput.configure(state = 'disabled')
+            setTextOutput(text)
+            nextButton.configure(state = 'normal')
             await at.event(nextButton, '<Button>')
             at.start(gameLoop())
         if answer == 'fight':
@@ -222,6 +217,7 @@ async def fight():
     global money
 
     nextButton.configure(state = 'disabled')
+    updatePlayerStats()
 
     if current_enemy == 'none':
         num = random.randint(0, len(enemyList[world]) - 1)
@@ -324,8 +320,39 @@ async def fight():
                         nextButton.configure(state = 'disabled')
                         at.start(check_levelup())
                     else:
+                        enemy_damage = random.randint(enemy_data['damage_min'], enemy_data['damage_max'])
+                        text = ('The ' + enemy_data['name'].lower() + ' dealt ' + str(enemy_damage) + ' damage to you!\n')
+                        setTextOutput(text)
                         turn_count += 1
-                        at.start(fight())
+                        health -= enemy_damage
+                        saveAllData()
+                        updatePlayerStats()
+                        nextButton.configure(state = 'normal')
+                        await at.event(nextButton, '<Button>')
+                        if health <= 0:
+                            current_enemy = 'none'
+                            currently_fighting = False
+                            money_lost = random.randint(enemy_data['money_min'], enemy_data['money_max'])
+                            exp_lost = random.randint(enemy_data['exp_min'], enemy_data['exp_max'])
+                            money -= money_lost
+                            exp -= exp_lost
+                            if money < 0:
+                                money = 0
+                            if exp < 0:
+                                exp = 0
+                            health = health_max
+                            mp = mp_max
+                            saveAllData()
+                            text = 'You were killed by the ' + enemy_data['name'].lower() + '.\n'
+                            text += 'You lost ' + str(money_lost) + ' money.\n'
+                            text += 'You lost ' + str(exp_lost) + ' exp.\n'
+                            setTextOutput(text)
+                            nextButton.configure(state = 'normal')
+                            await at.event(nextButton, '<Button>')
+                            at.start(gameLoop())
+                        else:
+                            updatePlayerStats()
+                            at.start(fight())
             else:
                 text = 'That is not an attack.'
                 setTextOutput(text)
@@ -349,48 +376,50 @@ async def heal():
     global max_mp_pot
     health_pots = small_health_pot + medium_health_pot + large_health_pot + max_health_pot
     mp_pots = small_mp_pot + medium_mp_pot + large_mp_pot + max_mp_pot
-    if (health < health_max) and (mp < mp_max):
+    if (health < health_max) or (mp < mp_max):
         if health_pots > 0 and mp_pots > 0:
             heal_options = []
             heal_options.clear
             heal_options.append('exit')
             text = 'Which potions would you like to use?\n'
-            if health_pots > 0:
-                text += ('\nHealth Potions\n')
-            if small_health_pot > 0:
-                text += ('Small Health Potion x' + str(small_health_pot) + ' Restores 10 health points.\n')
-                heal_options.append('smallhealthpotion')
-                heal_options.append('smallhealth')
-            if medium_health_pot > 0:
-                text += ('Medium Health Potion x' + str(medium_health_pot) + ' Restores 35 health points.\n')
-                heal_options.append('mediumhealthpotion')
-                heal_options.append('mediumhealth')
-            if large_health_pot > 0:
-                text += ('Large Health Potion x' + str(large_health_pot) + ' Restores 80 health points.\n')
-                heal_options.append('largehealthpotion')
-                heal_options.append('largehealth')
-            if max_health_pot > 0:
-                text += ('Max Health Potion x' + str(max_health_pot) + ' Restores all your health points.\n')
-                heal_options.append('maxhealthpotion')
-                heal_options.append('maxhealth')
-            if mp_pots > 0:
-                text += ('\nMP Potions\n')
-            if small_mp_pot > 0:
-                text += ('Small MP Potion x' + str(small_mp_pot) + ' Restores 10 MP points.\n')
-                heal_options.append('smallmppotion')
-                heal_options.append('smallmp')
-            if medium_mp_pot > 0:
-                text += ('Medium MP Potion x' + str(medium_mp_pot) + ' Restores 35 MP points.\n')
-                heal_options.append('mediummppotion')
-                heal_options.append('meduimmp')
-            if large_mp_pot > 0:
-                text += ('Large MP Potion x' + str(large_mp_pot) + ' Restores 80 MP points.\n')
-                heal_options.append('largemppotion')
-                heal_options.append('largemp')
-            if max_mp_pot > 0:
-                text += ('Max MP Potion x' + str(max_mp_pot) + ' Restores all your MP points.\n')
-                heal_options.append('maxmppotion')
-                heal_options.append('maxmp')
+            if (health < health_max):
+                if health_pots > 0:
+                    text += ('\nHealth Potions\n')
+                if small_health_pot > 0:
+                    text += ('Small Health Potion x' + str(small_health_pot) + ' Restores 10 health points.\n')
+                    heal_options.append('smallhealthpotion')
+                    heal_options.append('smallhealth')
+                if medium_health_pot > 0:
+                    text += ('Medium Health Potion x' + str(medium_health_pot) + ' Restores 35 health points.\n')
+                    heal_options.append('mediumhealthpotion')
+                    heal_options.append('mediumhealth')
+                if large_health_pot > 0:
+                    text += ('Large Health Potion x' + str(large_health_pot) + ' Restores 80 health points.\n')
+                    heal_options.append('largehealthpotion')
+                    heal_options.append('largehealth')
+                if max_health_pot > 0:
+                    text += ('Max Health Potion x' + str(max_health_pot) + ' Restores all your health points.\n')
+                    heal_options.append('maxhealthpotion')
+                    heal_options.append('maxhealth')
+            if (mp < mp_max):
+                if mp_pots > 0:
+                    text += ('\nMP Potions\n')
+                if small_mp_pot > 0:
+                    text += ('Small MP Potion x' + str(small_mp_pot) + ' Restores 10 MP points.\n')
+                    heal_options.append('smallmppotion')
+                    heal_options.append('smallmp')
+                if medium_mp_pot > 0:
+                    text += ('Medium MP Potion x' + str(medium_mp_pot) + ' Restores 35 MP points.\n')
+                    heal_options.append('mediummppotion')
+                    heal_options.append('meduimmp')
+                if large_mp_pot > 0:
+                    text += ('Large MP Potion x' + str(large_mp_pot) + ' Restores 80 MP points.\n')
+                    heal_options.append('largemppotion')
+                    heal_options.append('largemp')
+                if max_mp_pot > 0:
+                    text += ('Max MP Potion x' + str(max_mp_pot) + ' Restores all your MP points.\n')
+                    heal_options.append('maxmppotion')
+                    heal_options.append('maxmp')
             setTextOutput(text)
             submitButton.configure(state = 'normal')
             playerAnswerBox.configure(state = 'normal')
@@ -407,7 +436,7 @@ async def heal():
                     health += 35
                     text = 'You gained 35 health points.'
                 if answer == 'largehealthpotion' or answer == 'largehealth':
-                    large_health_potions -= 1
+                    large_health_pot -= 1
                     health += 80
                     text = 'You gained 80 health points.'
                 if answer == 'maxhealthpotion' or answer == 'maxhealth':
